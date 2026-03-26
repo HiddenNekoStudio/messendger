@@ -477,6 +477,9 @@ function renderUsers(users) {
           ${user.is_blocked 
             ? `<button class="btn btn-success btn-sm" onclick="unblockUser('${user.id}')">Unblock</button>`
             : `<button class="btn btn-warning btn-sm" onclick="blockUser('${user.id}')">Block</button>`}
+          ${user.is_admin 
+            ? `<button class="btn btn-danger btn-sm" onclick="toggleAdmin('${user.id}', false)">Revoke Admin</button>`
+            : `<button class="btn btn-success btn-sm" onclick="toggleAdmin('${user.id}', true)">Make Admin</button>`}
           ${!user.is_admin ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')">Delete</button>` : ''}
           <button class="btn btn-secondary btn-sm" onclick="showUserStorage('${user.id}')">Storage</button>
         </div>
@@ -557,6 +560,23 @@ async function unblockUser(id) {
     loadUsers();
   } catch (e) {
     showToast('Ошибка разблокировки', 'error');
+  }
+}
+
+async function toggleAdmin(id, isAdmin) {
+  const action = isAdmin ? 'назначить администратором' : 'снять права администратора';
+  if (!confirm(`${action}?`)) return;
+  
+  try {
+    const result = await api.put(`/admin/users/${id}/admin`, { isAdmin });
+    if (result.error) {
+      showToast(result.error, 'error');
+    } else {
+      showToast(result.message, 'success');
+      loadUsers();
+    }
+  } catch (e) {
+    showToast('Ошибка изменения прав', 'error');
   }
 }
 
@@ -827,6 +847,7 @@ window.blockUser = blockUser;
 window.unblockUser = unblockUser;
 window.deleteUser = deleteUser;
 window.editUser = editUser;
+window.toggleAdmin = toggleAdmin;
 window.deleteInvite = deleteInvite;
 window.copyToClipboard = copyToClipboard;
 window.closeModal = closeModal;

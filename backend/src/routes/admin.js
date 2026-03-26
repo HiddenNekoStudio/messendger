@@ -264,6 +264,41 @@ router.put('/users/:id/password', authenticate, requireAdmin, async (req, res) =
   }
 });
 
+router.put('/users/:id/admin', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isAdmin } = req.body;
+
+    const user = await findUserById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.is_admin && !isAdmin) {
+      const adminCount = await query('SELECT COUNT(*) as count FROM users WHERE is_admin = true');
+      if (parseInt(adminCount.rows[0].count) <= 1) {
+        return res.status(400).json({ error: 'Cannot remove last admin' });
+      }
+    }
+
+    await query(
+      `UPDATE users SET is_admin = $2, updated_at = NOW() WHERE id = $1`,
+      [id, isAdmin]
+    );
+
+    await query(
+      `INSERT INTO admin_logs (admin_id, action, target_user_id, details, ip_address)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [req.user.id, isAdmin ? 'grant_admin' : 'revoke_admin', id, JSON.stringify({ user_name: user.display_name }), req.ip]
+    );
+
+    res.json({ message: isAdmin ? 'Admin rights granted' : 'Admin rights revoked' });
+  } catch (error) {
+    console.error('Update admin status error:', error);
+    res.status(500).json({ error: 'Failed to update admin status' });
+  }
+});
+
 router.get('/invites', async (req, res) => {
   try {
     const { isUsed, limit = 50 } = req.query;
