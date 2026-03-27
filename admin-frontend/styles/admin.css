@@ -392,26 +392,44 @@ tr:hover td {
 
 .health-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
 }
 
 .health-item {
   background: var(--surface);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 20px;
   border: 1px solid var(--border);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.health-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
 }
 
 .health-item .health-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.health-item .health-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
 }
 
 .health-item .health-status {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .health-item.up .health-status {
@@ -420,6 +438,136 @@ tr:hover td {
 
 .health-item.down .health-status {
   color: var(--error);
+}
+
+.health-item .health-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.health-item.up .health-indicator {
+  background: var(--success);
+}
+
+.health-item.down .health-indicator {
+  background: var(--error);
+}
+
+.health-overall {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.health-overall-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.health-overall.status-healthy .health-overall-icon {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+}
+
+.health-overall.status-degraded .health-overall-icon {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--error);
+}
+
+.health-overall-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.health-overall-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.health-overall.status-healthy .health-overall-value {
+  color: var(--success);
+}
+
+.health-overall.status-degraded .health-overall-value {
+  color: var(--error);
+}
+
+.health-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.health-timestamp {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.health-auto-refresh {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.auto-refresh-toggle input {
+  display: none;
+}
+
+.toggle-slider {
+  width: 40px;
+  height: 22px;
+  background: var(--surface-alt);
+  border-radius: 11px;
+  position: relative;
+  transition: var(--transition);
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: var(--transition);
+}
+
+.auto-refresh-toggle input:checked + .toggle-slider {
+  background: var(--primary);
+}
+
+.auto-refresh-toggle input:checked + .toggle-slider::after {
+  transform: translateX(18px);
+  background: white;
+}
+
+.toggle-label {
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .logs-container {

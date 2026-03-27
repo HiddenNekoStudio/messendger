@@ -1,5 +1,5 @@
 const API_KEY = 'ENV_API_KEY';
-const API_URL = '/api';
+const API_URL = '/admin-api';
 
 let adminToken = localStorage.getItem('adminToken');
 let currentPage = 'dashboard';
@@ -233,37 +233,95 @@ async function loadDashboard() {
   }
 }
 
+let healthRefreshInterval = null;
+
 async function loadHealth() {
   const content = document.getElementById('content');
   
-  try {
-    const health = await api.get('/admin/health');
-    const statusClass = health.status === 'healthy' ? 'badge-success' : 'badge-error';
-    
-    content.innerHTML = `
-      <div class="health-status">
-        <h2 class="${statusClass}">Status: ${health.status?.toUpperCase()}</h2>
-        <p>Timestamp: ${new Date(health.timestamp).toLocaleString()}</p>
-        
-        <div class="services-grid">
-          <div class="service-card">
-            <h3>PostgreSQL</h3>
-            <span class="badge ${health.services?.postgres === 'up' ? 'badge-success' : 'badge-error'}">
-              ${health.services?.postgres || 'unknown'}
-            </span>
-          </div>
-          <div class="service-card">
-            <h3>Redis</h3>
-            <span class="badge ${health.services?.redis === 'up' ? 'badge-success' : 'badge-error'}">
-              ${health.services?.redis || 'unknown'}
-            </span>
+  if (healthRefreshInterval) {
+    clearInterval(healthRefreshInterval);
+    healthRefreshInterval = null;
+  }
+  
+  content.innerHTML = '<div class="loading">Loading health status...</div>';
+  
+  async function refreshHealth() {
+    try {
+      const health = await api.get('/admin/health');
+      const containers = health.containers || [];
+      const statusClass = health.status === 'healthy' ? 'status-healthy' : 'status-degraded';
+      
+      content.innerHTML = `
+        <div class="section-header">
+          <h2>Health Check</h2>
+          <div class="health-header-actions">
+            <span class="health-timestamp">Updated: ${new Date(health.timestamp).toLocaleTimeString()}</span>
+            <button class="btn btn-primary btn-sm" id="refresh-health-btn">Refresh</button>
           </div>
         </div>
-      </div>
-    `;
-  } catch (e) {
-    content.innerHTML = '<div class="loading">Failed to load health status</div>';
+        
+        <div class="health-overall ${statusClass}">
+          <div class="health-overall-icon">${health.status === 'healthy' ? '✓' : '!'}</div>
+          <div class="health-overall-text">
+            <div class="health-overall-label">System Status</div>
+            <div class="health-overall-value">${health.status?.toUpperCase()}</div>
+          </div>
+        </div>
+        
+        <div class="health-grid">
+          ${containers.map(c => `
+            <div class="health-item ${c.status === 'up' ? 'up' : 'down'}">
+              <div class="health-icon">${getServiceIcon(c.name)}</div>
+              <div class="health-name">${c.name}</div>
+              <div class="health-status">${c.status === 'up' ? 'Running' : 'Stopped'}</div>
+              <div class="health-indicator"></div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="health-auto-refresh">
+          <label class="auto-refresh-toggle">
+            <input type="checkbox" id="auto-refresh-toggle" checked>
+            <span class="toggle-slider"></span>
+            <span class="toggle-label">Auto-refresh (5s)</span>
+          </label>
+        </div>
+      `;
+      
+      document.getElementById('refresh-health-btn')?.addEventListener('click', refreshHealth);
+      
+      const toggle = document.getElementById('auto-refresh-toggle');
+      if (toggle) {
+        toggle.addEventListener('change', () => {
+          if (toggle.checked) {
+            healthRefreshInterval = setInterval(refreshHealth, 5000);
+          } else {
+            clearInterval(healthRefreshInterval);
+            healthRefreshInterval = null;
+          }
+        });
+      }
+      
+    } catch (e) {
+      content.innerHTML = '<div class="loading">Failed to load health status</div>';
+    }
   }
+  
+  await refreshHealth();
+  healthRefreshInterval = setInterval(refreshHealth, 5000);
+}
+
+function getServiceIcon(name) {
+  const icons = {
+    'PostgreSQL': '🐘',
+    'Redis': '🔴',
+    'Messenger': '💬',
+    'Sync': '🔄',
+    'Files': '📁',
+    'Nginx': '🌐',
+    'Admin': '🛡️'
+  };
+  return icons[name] || '📦';
 }
 
 async function loadLogs() {

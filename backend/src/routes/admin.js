@@ -31,18 +31,34 @@ router.use(verifyAdminApiKey);
 
 router.get('/health', async (req, res) => {
   try {
-    const [pgHealth, redisHealth] = await Promise.all([
-      pool.query('SELECT 1'),
-      import('../db/redis.js').then(m => m.default.ping())
+    const checkService = async (url, name) => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeout);
+        return { name, status: response.ok ? 'up' : 'down' };
+      } catch {
+        return { name, status: 'down' };
+      }
+    };
+
+    const [pgHealth, redisHealth, messengerHealth, syncHealth, filesHealth] = await Promise.all([
+      pool.query('SELECT 1').then(() => ({ name: 'PostgreSQL', status: 'up' })).catch(() => ({ name: 'PostgreSQL', status: 'down' })),
+      import('../db/redis.js').then(m => m.default.ping()).then(r => ({ name: 'Redis', status: r === 'PONG' ? 'up' : 'down' })).catch(() => ({ name: 'Redis', status: 'down' })),
+      checkService('http://localhost:3000/api/health', 'Messenger'),
+      checkService('http://sync:3002/health', 'Sync'),
+      checkService('http://files:3003/health', 'Files')
     ]);
 
+    const services = [pgHealth, redisHealth, messengerHealth, syncHealth, filesHealth];
+    const allUp = services.every(s => s.status === 'up');
+
     const status = {
-      status: 'healthy',
+      status: allUp ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
-      services: {
-        postgres: pgHealth.rows ? 'up' : 'down',
-        redis: redisHealth === 'PONG' ? 'up' : 'down'
-      }
+      services: services.reduce((acc, s) => ({ ...acc, [s.name.toLowerCase()]: s.status }), {}),
+      containers: services
     };
 
     res.json(status);
