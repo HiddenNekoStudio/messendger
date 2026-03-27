@@ -1642,12 +1642,6 @@ function showToast(message, type = 'info') {
   }, 3000);
 }
 
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
 function formatTime(date) {
   if (!date) return '';
   const d = new Date(date);
