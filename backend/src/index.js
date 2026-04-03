@@ -20,6 +20,7 @@ import messagesRoutes from './routes/messages.js';
 import filesRoutes from './routes/files.js';
 import adminRoutes from './routes/admin.js';
 import adminAuthRoutes from './routes/adminAuth.js';
+import gifRoutes from './routes/gif.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,14 +31,14 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*", "ws://192.168.1.36:*", "wss://192.168.1.36:*"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*"],
+      defaultSrc: ["'self'", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*", "http://127.0.0.1:*", "https://127.0.0.1:*", "ws://192.168.1.36:*", "wss://192.168.1.36:*", "ws://localhost:*", "wss://localhost:*", "ws://127.0.0.1:*", "wss://127.0.0.1:*"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.socket.io", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*", "http://127.0.0.1:*", "https://127.0.0.1:*"],
       scriptSrcAttr: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*", "http://127.0.0.1:*", "https://127.0.0.1:*"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'", "https://cdn.socket.io", "wss://192.168.1.36:*", "ws://192.168.1.36:*", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*"],
-      imgSrc: ["'self'", "data:", "blob:", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*"],
-      formAction: ["'self'", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*"],
+      connectSrc: ["'self'", "https://cdn.socket.io", "wss://192.168.1.36:*", "ws://192.168.1.36:*", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*", "wss://localhost:*", "http://127.0.0.1:*", "https://127.0.0.1:*", "wss://127.0.0.1:*"],
+      imgSrc: ["'self'", "data:", "blob:", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*", "http://127.0.0.1:*", "https://127.0.0.1:*"],
+      formAction: ["'self'", "https://192.168.1.36:*", "http://192.168.1.36:*", "http://localhost:*", "https://localhost:*", "http://127.0.0.1:*", "https://127.0.0.1:*"],
       frameAncestors: ["'none'"],
       objectSrc: ["'none'"],
     }
@@ -125,6 +126,7 @@ app.use('/api/messages', messagesRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin-auth', adminAuthRoutes);
+app.use('/api/gif', gifRoutes);
 
 app.use((err, req, res, next) => {
   logger.error(err);

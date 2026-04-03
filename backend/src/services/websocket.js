@@ -9,6 +9,11 @@ import { setOnlineStatus, removeOnlineStatus, isUserOnline } from '../db/redis.j
 let io;
 const userSockets = new Map();
 
+const checkFriendship = async (userId, targetId) => {
+  const result = await findFriendship(userId, targetId);
+  return result && result.status === 'accepted';
+};
+
 export const initWebSocket = (server) => {
   io = new Server(server, {
     cors: {
@@ -188,6 +193,150 @@ export const initWebSocket = (server) => {
         }
       } catch (error) {
         console.error('Typing error:', error);
+      }
+    });
+
+    socket.on('call', async (data) => {
+      console.log('Call received:', data);
+      const { targetId, roomId, callType } = data;
+      
+      const isFriend = await checkFriendship(socket.userId, targetId);
+      if (!isFriend) {
+        console.log('Call blocked: users are not friends');
+        socket.emit('call-error', { message: 'Можно звонить только друзьям' });
+        return;
+      }
+      
+      io.to(`user:${targetId}`).emit('incoming-call', {
+        SenderID: socket.userId,
+        RoomID: roomId,
+        CallType: callType
+      });
+    });
+
+    socket.on('accept', async (data) => {
+      console.log('Accept received:', data);
+      const { targetId, roomId, callType } = data;
+      
+      const isFriend = await checkFriendship(socket.userId, targetId);
+      if (!isFriend) {
+        console.log('Accept blocked: users are not friends');
+        return;
+      }
+      
+      console.log('Forwarding call-accepted to user:', targetId);
+      io.to(`user:${targetId}`).emit('call-accepted', {
+        SenderID: socket.userId,
+        RoomID: roomId,
+        CallType: callType
+      });
+    });
+
+    socket.on('join', async (data) => {
+      console.log('Join received:', data);
+      const { targetId, roomId } = data;
+      
+      if (targetId) {
+        const isFriend = await checkFriendship(socket.userId, targetId);
+        if (!isFriend) {
+          console.log('Join blocked: users are not friends');
+          return;
+        }
+      }
+      
+      io.to(`user:${targetId || socket.userId}`).emit('user-joined', {
+        SenderID: socket.userId,
+        RoomID: roomId
+      });
+    });
+
+    socket.on('offer', async (data) => {
+      console.log('Offer received:', data);
+      const { targetId, roomId, sdp } = data;
+      
+      const isFriend = await checkFriendship(socket.userId, targetId);
+      if (!isFriend) {
+        console.log('Offer blocked: users are not friends');
+        return;
+      }
+      
+      console.log('Forwarding offer to user:', targetId);
+      io.to(`user:${targetId}`).emit('offer', {
+        SenderID: socket.userId,
+        RoomID: roomId,
+        sdp: sdp
+    });
+
+    socket.on('answer', async (data) => {
+      console.log('Answer received:', data);
+      const { targetId, roomId, sdp } = data;
+      
+      const isFriend = await checkFriendship(socket.userId, targetId);
+      if (!isFriend) {
+        console.log('Answer blocked: users are not friends');
+        return;
+      }
+      
+      console.log('Forwarding answer to user:', targetId);
+      io.to(`user:${targetId}`).emit('answer', {
+        SenderID: socket.userId,
+        RoomID: roomId,
+        sdp: sdp
+      });
+    });
+    });
+
+    socket.on('answer', async (data) => {
+      console.log('Answer received:', data);
+      const { targetId, roomId, sdp } = data;
+      
+      const isFriend = await checkFriendship(socket.userId, targetId);
+      if (!isFriend) {
+        console.log('Answer blocked: users are not friends');
+        return;
+      }
+      
+      console.log('Forwarding answer to user:', targetId);
+      io.to(`user:${targetId}`).emit('answer', {
+        SenderID: socket.userId,
+        RoomID: roomId,
+        sdp: sdp
+      });
+    });
+
+    socket.on('ice-candidate', async (data) => {
+      console.log('ICE candidate received:', data);
+      const { targetId, candidate, sdpMid, sdpMLineIndex } = data;
+      
+      const isFriend = await checkFriendship(socket.userId, targetId);
+      if (!isFriend) {
+        console.log('ICE candidate blocked: users are not friends');
+        return;
+      }
+      
+      console.log('Forwarding ICE candidate to user:', targetId);
+      io.to(`user:${targetId}`).emit('ice-candidate', {
+        SenderID: socket.userId,
+        candidate: candidate,
+        sdpMid: sdpMid,
+        sdpMLineIndex: sdpMLineIndex
+      });
+    });
+
+    socket.on('end-call', async (data) => {
+      console.log('End call received:', data);
+      const { targetId } = data;
+      
+      const isFriend = await checkFriendship(socket.userId, targetId);
+      if (!isFriend) {
+        console.log('End call blocked: users are not friends');
+        return;
+      }
+      
+      if (targetId) {
+        io.to(`user:${targetId}`).emit('call-ended', {
+          SenderID: socket.userId
+        });
       }
     });
 

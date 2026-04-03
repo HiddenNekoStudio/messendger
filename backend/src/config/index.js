@@ -55,5 +55,9 @@ export default {
   
   sync: {
     url: process.env.SYNC_URL || 'http://localhost:3002'
+  },
+  
+  tenor: {
+    apiKey: process.env.TENOR_API_KEY || ''
   }
 };

@@ -243,6 +243,16 @@ a{color:var(--txL);text-decoration:none}
 #gif-results img:hover{opacity:.8}
 .msg-gif{max-width:250px;border-radius:var(--r);cursor:pointer}
 
+/* ═══ CALL MODAL ═══ */
+#call-modal{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:400;display:flex;align-items:center;justify-content:center}
+.call-modal-content{text-align:center;padding:20px;position:relative;width:100%;max-width:500px}
+.call-status{color:#fff;font-size:24px;margin-bottom:20px}
+.call-controls{display:flex;gap:20px;justify-content:center;margin-top:30px}
+.call-controls .btn-icon{width:60px;height:60px;border-radius:50%;font-size:24px;background:var(--bg2);color:#fff;border:none;cursor:pointer}
+.call-controls .btn-icon:hover{background:var(--bgHv)}
+.call-controls .btn-danger{background:var(--rd)}
+.call-controls .btn-danger:hover{background:#c00}
+
 /* ═══ MOBILE ═══ */
 .mobile-menu{display:none;position:fixed;top:10px;left:10px;z-index:5;width:36px;height:36px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);font-size:18px;align-items:center;justify-content:center}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9}.overlay.on{display:block}

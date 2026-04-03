@@ -48,7 +48,8 @@ router.get('/:friendId', authenticate, async (req, res) => {
       return res.status(403).json({ error: 'Not a friend' });
     }
 
-    const messages = await getMessages(req.user.id, friendId, parseInt(limit), before);
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 100);
+    const messages = await getMessages(req.user.id, friendId, safeLimit, before);
     
     await markMessagesAsRead(req.user.id, friendId);
 
@@ -96,7 +97,9 @@ router.get('/search', authenticate, async (req, res) => {
   try {
     const { q, limit = 50 } = req.query;
     if (!q) return res.status(400).json({ error: 'Search query required' });
-    const messages = await searchMessages(req.user.id, q, parseInt(limit));
+    
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 50, 1), 100);
+    const messages = await searchMessages(req.user.id, q, safeLimit);
     res.json({ messages: messages.map(m => ({
       id: m.id,
       senderId: m.sender_id,
@@ -162,6 +165,11 @@ router.put('/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { encryptedContent } = req.body;
+    
+    if (!encryptedContent || typeof encryptedContent !== 'string' || encryptedContent.trim() === '') {
+      return res.status(400).json({ error: 'Message content cannot be empty' });
+    }
+    
     const message = await updateMessageContent(id, req.user.id, encryptedContent);
     if (!message) return res.status(404).json({ error: 'Message not found' });
     res.json({ message: { id: message.id, encryptedContent: message.encrypted_content, editedAt: message.edited_at } });
@@ -187,6 +195,11 @@ router.post('/:id/reactions', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const { emoji, action } = req.body;
+    
+    if (action && !['add', 'remove'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+    
     if (action === 'remove') {
       await removeReaction(id, req.user.id, emoji);
       res.json({ message: 'Reaction removed' });
@@ -238,6 +251,10 @@ router.delete('/:id', authenticate, async (req, res) => {
     
     if (!deleted) {
       return res.status(404).json({ error: 'Message not found' });
+    }
+
+    if (deleted.file_url) {
+      deleteFileFromDisk(deleted.file_url);
     }
 
     res.json({ message: 'Message deleted' });

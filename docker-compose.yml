@@ -118,6 +118,22 @@ services:
       - messenger-network
     restart: unless-stopped
 
+  signaling:
+    build:
+      context: .
+      dockerfile: Dockerfile.signaling
+    container_name: secure_messenger_signaling
+    ports:
+      - "3004:3004"
+    networks:
+      - messenger-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   postgres:
     image: postgres:15-alpine
     container_name: messenger_postgres
